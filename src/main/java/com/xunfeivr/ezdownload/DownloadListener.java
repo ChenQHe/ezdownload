@@ -5,7 +5,7 @@ package com.xunfeivr.ezdownload;
  * company:讯飞幻境科技有限公司
  * author:ChenHe
  * Time:18-8-16 下午5:16
- *
+ * <p>
  * 一个下载进度的回调接口
  */
 public interface DownloadListener {
@@ -24,7 +24,7 @@ public interface DownloadListener {
      * @param current 下载进度
      * @param length  总长度
      */
-    void onProgress(String speed, long current, long length);
+    void onProgress(DownloadFile file, String speed, long current, long length);
 
     /**
      * 下载出错时回调
@@ -32,17 +32,16 @@ public interface DownloadListener {
      * @param code 错误码
      * @param msg  错误信息
      */
-    void onError(int code, String msg);
+    void onError(DownloadFile file, int code, String msg);
 
     /**
      * 文件下载成功
-     *
-     * @param filePath 下载的文件
      */
-    void onCompleted(String filePath);
+
+    void onCompleted(DownloadFile file);
 
     /**
      * 下载取消
      */
-    void onCancel();
+    void onCancel(DownloadFile file);
 }

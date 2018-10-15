@@ -1,5 +1,6 @@
 package com.xunfeivr.ezdownload;
 
+
 /**
  * Created by android studio.
  * company:讯飞幻境科技有限公司
@@ -8,8 +9,25 @@ package com.xunfeivr.ezdownload;
  * <p>
  * 需要下载的实体类
  */
-public class DownloadFile {
-    public String url;          //下载地址             从服务器获取
-    public String parent;       //文件保存目录          本地固定
-    public String fileName;     //文件名字             从服务器获取
+public abstract class DownloadFile {
+
+    /**
+     * @return  下载地址
+     */
+    public abstract String getDownloadUrl();
+
+    /**
+     * @return  下载文件名称
+     */
+    public abstract String getFileName();
+
+    /**
+     * @return 下载保存的位置目录
+     */
+    public abstract String getParent();
+
+    /**
+     * @return 新的实例
+     */
+    public abstract DownloadFile newInstance();
 }

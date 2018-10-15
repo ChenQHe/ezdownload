@@ -26,10 +26,6 @@ class DownloadMessage {
      */
     public String speed;
     /**
-     * 下载完后的位置
-     */
-    public String filePath;
-    /**
      * 错误码
      */
     public int code;

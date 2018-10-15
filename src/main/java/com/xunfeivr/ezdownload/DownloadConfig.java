@@ -32,12 +32,12 @@ public class DownloadConfig {
     /**
      * 刷新率 默认每 80次写入 刷新一次进度
      */
-    private int rate = 80;
+    private int rate = 100;
 
     /**
      * 线程个数
      */
-    private int threadNum = 3;
+    private int threadNum = 2;
 
     public int getThreadNum() {
         return threadNum;

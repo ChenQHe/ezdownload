@@ -16,10 +16,11 @@ interface IDownloadService {
      */
     void download(DownloadFile file);
 
+
     /**
      * 取消下载 可以当暂停用
      */
-    void cancel();
+    void cancel(String url);
 
     /**
      * 添加一个监听器 可以在任何地方回调

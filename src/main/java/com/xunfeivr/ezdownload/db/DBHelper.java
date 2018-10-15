@@ -105,7 +105,7 @@ public class DBHelper extends SQLiteOpenHelper implements DBInterface {
             result = (int) getReadableDatabase().insert("break_point", null, contentValues);
             contentValues.clear();
         } else {
-            result = updateBreakPointInfoCurrent(breakPointInfo.id,breakPointInfo.offset);
+            result = updateBreakPointInfoCurrent(breakPointInfo.id, breakPointInfo.offset);
         }
         if (result == -1) {
             LogUtil.e("插入失败！");
@@ -269,9 +269,13 @@ public class DBHelper extends SQLiteOpenHelper implements DBInterface {
     }
 
     @Override
-    public synchronized void deleteTaskInfo(int id) {
-        getReadableDatabase().delete("task_info", "id=?", new String[]{String.valueOf(id)});
+    public synchronized int deleteTaskInfo(int id) {
+        int result = getReadableDatabase().delete("task_info", "id=?", new String[]{String.valueOf(id)});
         getReadableDatabase().delete("break_point", "task_id=?", new String[]{String.valueOf(id)});
+        if (result == -1) {
+            LogUtil.e("删除失败!");
+        }
+        return result;
     }
 
     @Override

@@ -20,10 +20,7 @@ import java.util.List;
  */
 public class DownloadService extends Service implements DownloadListener, IDownloadService {
 
-    /**
-     * 下载任务
-     */
-    private DownloadTask mDownloadTask;
+    private DownloadTaskDispatcher mDownloadTaskDispatcher;
 
     /**
      * 下载监听器的集合  这样作可以保证在其他地方刷新进度
@@ -35,14 +32,14 @@ public class DownloadService extends Service implements DownloadListener, IDownl
         return new MyBinder();
     }
 
-    public class MyBinder extends Binder {
-        public DownloadService getService() {
+    class MyBinder extends Binder {
+        DownloadService getService() {
             return DownloadService.this;
         }
     }
 
-    public void config(DownloadConfig config){
-        mDownloadTask.config(config);
+    public void config(DownloadConfig config) {
+        mDownloadTaskDispatcher.config(config);
     }
 
     @Override
@@ -58,27 +55,19 @@ public class DownloadService extends Service implements DownloadListener, IDownl
     }
 
     private void init() {
-        if (mDownloadTask == null) {
-            mDownloadTask = new DownloadTask(this);
+        if (mDownloadTaskDispatcher == null) {
+            mDownloadTaskDispatcher = new DownloadTaskDispatcher(this, this);
         }
     }
 
     @Override
     public void download(DownloadFile file) {
-        if (!mDownloadTask.isDownloading()) {
-            mDownloadTask.startDownload(file, this);
-        } else {
-            LogUtil.e("正在下载中.......");
-        }
+        mDownloadTaskDispatcher.addTask(file);
     }
 
     @Override
-    public void cancel() {
-        if (mDownloadTask.isDownloading()) {
-            mDownloadTask.cancel();
-        } else {
-            LogUtil.e("没有下载的任务.......");
-        }
+    public void cancel(String url) {
+        mDownloadTaskDispatcher.cancel(url);
     }
 
     @Override
@@ -91,6 +80,7 @@ public class DownloadService extends Service implements DownloadListener, IDownl
         mDownloadListenerList.remove(listener);
     }
 
+
     @Override
     public void onStart(DownloadFile file, long length) {
         for (DownloadListener downloadListener : mDownloadListenerList) {
@@ -101,37 +91,37 @@ public class DownloadService extends Service implements DownloadListener, IDownl
     }
 
     @Override
-    public void onProgress(String speed, long current, long total) {
+    public void onProgress(DownloadFile file, String speed, long current, long total) {
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
-                downloadListener.onProgress(speed, current, total);
+                downloadListener.onProgress(file, speed, current, total);
             }
         }
     }
 
     @Override
-    public void onError(int code, String msg) {
+    public void onError(DownloadFile file, int code, String msg) {
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
-                downloadListener.onError(code, msg);
+                downloadListener.onError(file, code, msg);
             }
         }
     }
 
     @Override
-    public void onCompleted(String filePath) {
+    public void onCompleted(DownloadFile file) {
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
-                downloadListener.onCompleted(filePath);
+                downloadListener.onCompleted(file);
             }
         }
     }
 
     @Override
-    public void onCancel() {
+    public void onCancel(DownloadFile file) {
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
-                downloadListener.onCancel();
+                downloadListener.onCancel(file);
             }
         }
     }

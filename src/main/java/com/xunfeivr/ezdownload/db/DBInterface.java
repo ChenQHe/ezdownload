@@ -49,7 +49,7 @@ public interface DBInterface {
      * 从数据库中删除一条 任务信息
      * @param id 任务 id
      */
-    void deleteTaskInfo(int id);
+    int deleteTaskInfo(int id);
 
     /**
      * 更新数据库中 一条任务的 进度

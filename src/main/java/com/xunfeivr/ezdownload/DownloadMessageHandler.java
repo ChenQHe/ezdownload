@@ -33,40 +33,39 @@ class DownloadMessageHandler implements DownloadListener, Handler.Callback {
 
     @Override
     public void onStart(DownloadFile file, long length) {
-        mMessage.file = file;
         mMessage.length = length;
-        sendMessage(START);
+        sendMessage(file, START);
     }
 
     @Override
-    public void onProgress(String speed, long current, long length) {
+    public void onProgress(DownloadFile file, String speed, long current, long length) {
         mMessage.speed = speed;
         mMessage.current = current;
         mMessage.length = length;
-        sendMessage(DOWNLOADING);
+        sendMessage(file, DOWNLOADING);
     }
 
     @Override
-    public void onError(int code, String msg) {
+    public void onError(DownloadFile file, int code, String msg) {
         mMessage.code = code;
         mMessage.error = msg;
-        sendMessage(ERROR);
+        sendMessage(file, ERROR);
     }
 
     @Override
-    public void onCompleted(String filePath) {
-        mMessage.filePath = filePath;
-        sendMessage(COMPLETE);
+    public void onCompleted(DownloadFile file) {
+        sendMessage(file, COMPLETE);
     }
 
     @Override
-    public void onCancel() {
-        sendMessage(CANCEL);
+    public void onCancel(DownloadFile file) {
+        sendMessage(file, CANCEL);
     }
 
-    private void sendMessage(int state) {
+    private void sendMessage(DownloadFile file, int state) {
         Message message = mHandler.obtainMessage();
         message.what = state;
+        mMessage.file = file;
         message.obj = mMessage;
         mHandler.sendMessage(message);
     }
@@ -79,20 +78,20 @@ class DownloadMessageHandler implements DownloadListener, Handler.Callback {
                 mDownloadListener.onStart(obj.file, obj.length);
                 break;
             case DOWNLOADING:
-                mDownloadListener.onProgress(obj.speed, obj.current, obj.length);
+                mDownloadListener.onProgress(obj.file, obj.speed, obj.current, obj.length);
                 break;
             case ERROR:
-                mDownloadListener.onError(obj.code, obj.error);
+                mDownloadListener.onError(obj.file, obj.code, obj.error);
                 break;
             case CANCEL:
-                mDownloadListener.onCancel();
+                mDownloadListener.onCancel(obj.file);
                 break;
             case COMPLETE:
-                mDownloadListener.onCompleted(obj.filePath);
+                mDownloadListener.onCompleted(obj.file);
                 break;
         }
         mHandler.removeMessages(msg.what, msg.obj);
-        return false;
+        return true;
     }
 
 }

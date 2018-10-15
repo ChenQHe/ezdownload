@@ -25,9 +25,6 @@ public class DownloadMgr implements IDownloadService {
     private DownloadService mDownloadService;
 
     private ServiceConnection mServiceConnection;
-
-    private DownloadFile mDownloadFile;
-
     /**
      * 监听器
      */
@@ -59,10 +56,14 @@ public class DownloadMgr implements IDownloadService {
 
     /**
      * 这个应该在 MainActivity 的onCreate()中调用
-     * @param context 上下文
+     *
+     * @param context          上下文
      * @param downloadListener 监听器
      */
     public void bindService(Activity context, DownloadListener downloadListener) {
+        if (context == null) {
+            return;
+        }
         mDownloadListener = downloadListener;
         Intent intent = new Intent(context, DownloadService.class);
         context.startService(intent);
@@ -71,11 +72,14 @@ public class DownloadMgr implements IDownloadService {
 
     /**
      * 这个应该在 MainActivity 的onDestroy()中调用
-     * @param context
+     *
+     * @param context 上下文
      */
     public void unbindService(Activity context) {
-        context.unbindService(mServiceConnection);
-        removeDownloadListener(mDownloadListener);
+        if (context != null) {
+            context.unbindService(mServiceConnection);
+            removeDownloadListener(mDownloadListener);
+        }
     }
 
     public void config(DownloadConfig config) {
@@ -87,24 +91,14 @@ public class DownloadMgr implements IDownloadService {
     @Override
     public void download(DownloadFile file) {
         if (mDownloadService != null && file != null) {
-            LogUtil.e("下载一个文件");
-            mDownloadFile = file;
             mDownloadService.download(file);
         }
     }
 
-    /**
-     * 重新下载
-     */
-    public void restart() {
-        download(mDownloadFile);
-    }
-
     @Override
-    public void cancel() {
+    public void cancel(String url) {
         if (mDownloadService != null) {
-            LogUtil.e("取消下载");
-            mDownloadService.cancel();
+            mDownloadService.cancel(url);
         }
     }
 

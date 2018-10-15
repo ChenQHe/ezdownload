@@ -23,6 +23,9 @@ import java.util.List;
  * 一个断点的下载线程
  */
 class DownloadThread extends Thread {
+
+    private static final int DOWNLOAD_STATE_ING = 1;
+    private static final int DOWNLOAD_STATE_INIT = 2;
     /**
      * 下载配置文件
      */
@@ -40,10 +43,6 @@ class DownloadThread extends Thread {
      */
     private DownloadThreadListener mDownloadListener;
     /**
-     * 下载状态
-     */
-    private boolean isDownloading;
-    /**
      * 控制停止
      */
     private boolean stop;
@@ -56,13 +55,16 @@ class DownloadThread extends Thread {
      */
     private File mFile;
 
+    private int mDownloadState;
+
     /**
      * 构造方法
-     * @param url  下载地址
-     * @param file 下载位置
-     * @param id 断点id
-     * @param list 所有线程的集合
-     * @param downloadConfig 下载配置
+     *
+     * @param url              下载地址
+     * @param file             下载位置
+     * @param id               断点id
+     * @param list             所有线程的集合
+     * @param downloadConfig   下载配置
      * @param downloadListener 下载回调
      */
     DownloadThread(String url, File file, int id, List<BreakPointInfo> list,
@@ -70,6 +72,7 @@ class DownloadThread extends Thread {
         mBreakPointInfoList = list;
         mUrl = url;
         mFile = file;
+        mDownloadState = DOWNLOAD_STATE_INIT;
         for (BreakPointInfo breakPointInfo : list) {
             if (breakPointInfo.id == id) {
                 mBreakPointInfo = breakPointInfo;
@@ -80,23 +83,21 @@ class DownloadThread extends Thread {
     }
 
     /**
-     * @return  是否正在下载
-     */
-    public boolean isDownloading() {
-        return isDownloading;
-    }
-
-    /**
      * 取消下载
      */
-    public void cancel() {
+    void cancel() {
         stop = true;
+    }
+
+    boolean isRunning() {
+        return mDownloadState != DOWNLOAD_STATE_INIT;
     }
 
     @Override
     public void run() {
         RandomAccessFile accessFile = null;
         BufferedInputStream bis = null;
+        HttpURLConnection connection = null;
         try {
             //如果已经下载完 直接回调完成
             if (mBreakPointInfo.offset >= mBreakPointInfo.length) {
@@ -104,7 +105,7 @@ class DownloadThread extends Thread {
                 return;
             }
             //创建任意访问文件
-            accessFile = new RandomAccessFile(mFile, "rw");
+            accessFile = new RandomAccessFile(mFile, "rwd");
             //将位置移到游标处
             accessFile.seek(mBreakPointInfo.offset);
             //给服务器的请求头  里面表示需要请求哪段数据 ("Range","bytes=offset-length")
@@ -112,7 +113,7 @@ class DownloadThread extends Thread {
             LogUtil.e(range);
             //创建连接
             URL url = new URL(mUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection = (HttpURLConnection) url.openConnection();
             //配置
             Util.configConnection(connection, mDownloadConfig);
             //添加断点请求
@@ -122,7 +123,7 @@ class DownloadThread extends Thread {
             //连接net
             connection.connect();
             //记录下载状态 正在下载
-            isDownloading = true;
+            mDownloadState = DOWNLOAD_STATE_ING;
             int code = connection.getResponseCode();
             if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_PARTIAL) {
                 //如果服务器有错误 直接返回
@@ -134,10 +135,10 @@ class DownloadThread extends Thread {
                     while ((len = errorStream.read(buf)) != -1) {
                         byteArrayOutputStream.write(buf, 0, len);
                     }
-                    mDownloadListener.onError(mBreakPointInfo, 404, byteArrayOutputStream.toString("UTF-8"));
-                    isDownloading = false;
-                    //断开
-                    connection.disconnect();
+                    mDownloadListener.onError(mBreakPointInfo, HttpError.SERVER_NOT_RESPONSE, byteArrayOutputStream.toString("UTF-8"));
+                    mDownloadState = DOWNLOAD_STATE_INIT;
+                    errorStream.close();
+                    byteArrayOutputStream.close();
                     return;
                 }
                 //获取输入流
@@ -145,19 +146,22 @@ class DownloadThread extends Thread {
                 bis = new BufferedInputStream(is);
                 mDownloadListener.onStart(mBreakPointInfo);
                 int len;
-                byte[] buf = new byte[128 * 1024];
+                byte[] buf = new byte[512];
                 int count = 0;//记录写入次数
                 while ((len = bis.read(buf)) != -1) {
-                    accessFile.write(buf, 0, len);//写入到文件缓存
+                    accessFile.write(buf, 0, len);//
                     mBreakPointInfo.offset = mBreakPointInfo.offset + len;//移动游标
                     mBreakPointInfo.currentDownloaded = mBreakPointInfo.currentDownloaded + len;//记录当前下载长度
                     count = count + 1;
-                    if (count % rate == 0) {
-                        //对调进度
-                        mDownloadListener.onProgress(mBreakPointInfoList,mBreakPointInfo);
+                    if (count % rate == 0 || mBreakPointInfo.offset >= mBreakPointInfo.length) {
+                        //回调进度
+                        mDownloadListener.onProgress(mBreakPointInfoList, mBreakPointInfo);
                         mBreakPointInfo.currentDownloaded = 0;
-                        accessFile.getFD().sync();//写入文件保存
+                        if (mBreakPointInfo.offset >= mBreakPointInfo.length) {
+                            break;
+                        }
                     }
+
                     if (stop) {//用户取消
                         mDownloadListener.onCancel(mBreakPointInfo);
                         break;
@@ -169,15 +173,13 @@ class DownloadThread extends Thread {
             } else {
                 mDownloadListener.onError(mBreakPointInfo, code, connection.getResponseMessage());
             }
-            connection.disconnect();
         } catch (IOException e) {
-            mDownloadListener.onError(mBreakPointInfo, 303, e.getMessage());
+            mDownloadListener.onError(mBreakPointInfo, HttpError.SERVER_ERROR, e.toString());
         } finally {
             //不管如何 最终都要下载完成 资源释放和文件保存
-            isDownloading = false;
+            mDownloadState = DOWNLOAD_STATE_INIT;
             if (accessFile != null) {
                 try {
-                    accessFile.getFD().sync();
                     accessFile.close();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -189,6 +191,9 @@ class DownloadThread extends Thread {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
+            }
+            if (connection != null) {
+                connection.disconnect();
             }
         }
 
