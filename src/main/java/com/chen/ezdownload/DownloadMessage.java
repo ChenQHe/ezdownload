@@ -1,36 +1,36 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-7-3 下午3:14
+ * Time:18-7-3 PM:3:14
  * <p>
- * 回调的消息
+ * Callback message
  */
 class DownloadMessage {
     /**
-     * 文件长度
+     * File length
      */
     public long length;
     /**
-     * 当前下载的长度
+     * Current download length
      */
     public long current;
     /**
-     * 下载的文件
+     * Downloaded file
      */
     public DownloadFile file;
     /**
-     * 下载速度
+     * download speed
      */
     public String speed;
     /**
-     * 错误码
+     * error code
      */
     public int code;
     /**
-     * 错误信息
+     * Error message
      */
     public String error;
 }

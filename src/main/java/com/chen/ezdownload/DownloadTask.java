@@ -1,12 +1,12 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
 import android.content.Context;
 
-import com.xunfeivr.ezdownload.db.BreakPointInfo;
-import com.xunfeivr.ezdownload.db.DBHelper;
-import com.xunfeivr.ezdownload.db.TaskInfo;
-import com.xunfeivr.ezdownload.util.LogUtil;
-import com.xunfeivr.ezdownload.util.Util;
+import com.chen.ezdownload.db.BreakPointInfo;
+import com.chen.ezdownload.db.DBHelper;
+import com.chen.ezdownload.db.TaskInfo;
+import com.chen.ezdownload.util.LogUtil;
+import com.chen.ezdownload.util.Util;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -22,55 +22,55 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-13 下午6:37
+ * Time:18-8-13 PM:6:37
  * <p>
- * 下载的调度者 控制整体的下载
+ * Download scheduler, Control the overall download
  */
 class DownloadTask implements Runnable, DownloadThreadListener {
 
     /**
-     * 下载配置
+     * Download configuration
      */
     private DownloadConfig mDownloadConfig;
     /**
-     * 需要下载的文件
+     * Files that need to be downloaded
      */
     private DownloadFile mDownloadFile;
     /**
-     * 下载进度回调 直接回调到 主线程
+     * Download progress callback, Direct callback to main thread
      */
     private DownloadMessageHandler mDownloadListener;
     /**
-     * 记录下载的线程
+     * Record the downloaded thread
      */
     private final Map<Integer, DownloadThread> mDownloadThreadMap = new ConcurrentHashMap<>();
     /**
-     * 任务id  从数据库获取
+     * Task id is obtained from the database
      */
     private int id;
     /**
-     * 这个任务的总长度
+     * The total length of this task
      */
     private long mTotalLength;
     /**
-     * 上一次进度回到的时间点
+     * The time when the last progress returned
      */
     private long mLastTime;
     /**
-     * 任务启动的时间 这个是参考系  所有的时间都要减去这个时间 进行变换
+     * The time when the task is started. This is the reference system. All time is subtracted from this time.
      */
     private long mStartTime;
 
     /**
-     * 数据库操作类
+     * Database operation class
      */
     private DBHelper mDBHelper;
 
     DownloadTask(Context context, DownloadFile downloadFile, DownloadListener downloadListener) {
         mDBHelper = DBHelper.getInstance(context);
-        mDownloadFile = downloadFile.newInstance();
+        mDownloadFile = downloadFile.clone();
         mDownloadListener = new DownloadMessageHandler(downloadListener);
         mDownloadThreadMap.clear();
         mLastTime = 0;
@@ -83,17 +83,7 @@ class DownloadTask implements Runnable, DownloadThreadListener {
     }
 
     /**
-     * @return 返回一个下载配置  防止用户没有设置 给个默认的
-     */
-    private DownloadConfig getDownloadConfig() {
-        if (mDownloadConfig == null) {
-            mDownloadConfig = new DownloadConfig();
-        }
-        return mDownloadConfig;
-    }
-
-    /**
-     * 取消下载任务
+     * Cancel download task
      */
     void cancel() {
         for (DownloadThread downloadThread : mDownloadThreadMap.values()) {
@@ -115,20 +105,18 @@ class DownloadTask implements Runnable, DownloadThreadListener {
     @Override
     public void run() {
         try {
-            //创建下载文件保存的位置
+            //Create a location where the download file is saved
             File file = createFile(mDownloadFile.getParent(), mDownloadFile.getFileName());
             if (file == null) {
-                mDownloadListener.onError(mDownloadFile, HttpError.FILE_ERROR, "文件无法创建");
+                mDownloadListener.onError(mDownloadFile, HttpError.FILE_ERROR, "File could not be created");
                 return;
             }
-            //获取一个下载连接的配置文件
-            DownloadConfig downloadConfig = getDownloadConfig();
-            //如果是已经在数据库保存过的，这样的任务可以继续断点下载
-            if (startOldWork(file, downloadConfig)) {
+            //If it has been saved in the database, such a task can continue to download the breakpoint
+            if (startOldWork(file)) {
                 return;
             }
-            //如果数据库中没有 则重头创建一个新任务 并插入数据库
-            startNewWork(file, downloadConfig);
+            //If not in the database, create a new task and insert the database.
+            startNewWork(file);
         } catch (IOException e) {
             mDownloadListener.onError(mDownloadFile, HttpError.SERVER_ERROR, e.getMessage());
         }
@@ -136,33 +124,32 @@ class DownloadTask implements Runnable, DownloadThreadListener {
     }
 
     /**
-     * 开启一个新任务
+     * Open a new task
      *
-     * @param file           保存的文件
-     * @param downloadConfig 下载的配置文件
-     * @throws IOException url异常 文件异常
+     * @param file           Saved file
+     * @throws IOException Url exception file exception
      */
-    private void startNewWork(File file, DownloadConfig downloadConfig) throws IOException {
+    private void startNewWork(File file) throws IOException {
         if (file.exists() && file.delete()) {
-            LogUtil.e("文件重新下载...");
+            LogUtil.e("File re-download...");
         }
         if (!file.createNewFile()) {
-            mDownloadListener.onError(mDownloadFile, HttpError.FILE_ERROR, "文件无法创建");
+            mDownloadListener.onError(mDownloadFile, HttpError.FILE_ERROR, "File could not be created");
             return;
         }
-        //构造URL
+        //Construct URL
         URL url = new URL(mDownloadFile.getDownloadUrl());
-        //打一个urlConnection连接
+        //Hit a urlConnection connection
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-        //配置连接
-        Util.configConnection(connection, downloadConfig);
-        //开启网络连接
+        //Configuration connection
+        Util.configConnection(connection, mDownloadConfig);
+        //Turn on network connection
         connection.connect();
-        //获取返回码
+        //Get return code
         int code = connection.getResponseCode();
-        //200成功
+        //200 success
         if (code == HttpURLConnection.HTTP_OK) {
-            //如果服务器有错误 直接返回
+            //If the server has an error, return directly
             InputStream errorStream = connection.getErrorStream();
             if (errorStream != null) {
                 ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -181,58 +168,58 @@ class DownloadTask implements Runnable, DownloadThreadListener {
             } catch (NumberFormatException e) {
                 mTotalLength = -1;
             }
-            //断开连接 可以分配任务了
+            //Disconnected, you can assign tasks.
             connection.disconnect();
             if (mTotalLength < 0) {
-                mDownloadListener.onError(mDownloadFile, HttpError.SERVER_NOT_FILE, "服务端无该文件可下载");
+                mDownloadListener.onError(mDownloadFile, HttpError.SERVER_NOT_FILE, "The server does not have the file to download");
                 return;
             }
-            //初始化一个任意访问文件
+            //Initialize a RandomAccessFile
             RandomAccessFile accessFile = new RandomAccessFile(file, "rwd");
             accessFile.setLength(mTotalLength);
             accessFile.close();
-            //创建任务信息 保存到数据库
+            //Create task information Save to database
             TaskInfo taskInfo = new TaskInfo();
             taskInfo.setFileName(mDownloadFile.getFileName());
             taskInfo.setParent(mDownloadFile.getParent());
             taskInfo.setUrl(mDownloadFile.getDownloadUrl());
             taskInfo.setLength(mTotalLength);
-            //数据库返回一个id
+            //The database returns an id
             id = mDBHelper.saveTaskInfo(taskInfo);
             taskInfo.setId(id);
-            //获取下载线程的个数
-            int threadNum = downloadConfig.getThreadNum();
+            //Get the number of download threads
+            int threadNum = mDownloadConfig.getThreadNum();
             if (mTotalLength < 1024 * 1024 * 30) {
                 threadNum = 1;
             }
-            //将长度分块 每块加1防止总数据丢失
+            //Block lengths and add 1 to each block to prevent total data loss
             long block = mTotalLength / threadNum;
             mDownloadListener.onStart(mDownloadFile, mTotalLength);
             List<BreakPointInfo> list = new ArrayList<>();
             for (int i = 0; i < threadNum; i++) {
-                //创建断点信息 保存到数据库
+                //Create breakpoint information Save to database
                 BreakPointInfo breakPointInfo = new BreakPointInfo();
-                //id是本任务的id 每个断点都保存一份 方便以后找到这个任务的所有断点
+                //Id is the id of this task. Each breakpoint is saved. It is convenient to find all the breakpoints of this task later.
                 breakPointInfo.taskId = id;
-                //设置断点的起始位置
+                //Set the starting position of the breakpoint
                 breakPointInfo.start = block * i;
-                //设置下载游标 跟着下载进度向前走动
+                //Set the download cursor and move forward with the download progress
                 breakPointInfo.offset = breakPointInfo.start;
-                //设置断点的长度
+                //Set the length of the breakpoint
                 breakPointInfo.length = breakPointInfo.start + block - 1;
                 if (i == threadNum - 1) {
                     breakPointInfo.length = mTotalLength;
                 }
-                //保存到数据库
+                //Save to database
                 breakPointInfo.id = mDBHelper.saveBreakPointInfo(breakPointInfo);
 
                 list.add(breakPointInfo);
-                //创建任务
+                //Create task
                 DownloadThread downloadThread = new DownloadThread(mDownloadFile.getDownloadUrl(), file,
-                        breakPointInfo.id, list, downloadConfig, this);
-                //保存到内存一份
+                        breakPointInfo.id, list, mDownloadConfig, this);
+                //Save to memory
                 mDownloadThreadMap.put(breakPointInfo.id, downloadThread);
-                //开始任务
+                //Start task
                 downloadThread.start();
             }
         } else {
@@ -241,16 +228,15 @@ class DownloadTask implements Runnable, DownloadThreadListener {
     }
 
     /**
-     * 开启一个老任务
+     * Open an old task
      *
-     * @param file           保存的文件
-     * @param downloadConfig 下载的配置文件
-     * @return true 老任务已经处理 false 老任务不能处理
+     * @param file           Saved file
+     * @return True, old task has been processed ;false, old task can not be processed
      */
-    private boolean startOldWork(File file, DownloadConfig downloadConfig) {
-        //从数据库中读取这个url保存的任务信息
+    private boolean startOldWork(File file) {
+        //Read the task information saved by this url from the database
         TaskInfo taskInfo = mDBHelper.getTaskInfo(mDownloadFile.getDownloadUrl());
-        //如果有
+        //If exists
         if (taskInfo != null) {
             if (!file.exists()) {
                 mDBHelper.deleteTaskInfo(taskInfo.getId());
@@ -258,14 +244,14 @@ class DownloadTask implements Runnable, DownloadThreadListener {
             }
             id = taskInfo.getId();
             mTotalLength = taskInfo.getLength();
-            //获取断点信息 可能没有
+            //Get breakpoint information, Maybe null
             List<BreakPointInfo> list = taskInfo.getBreakPointInfoList();
             if (list != null) {
                 mDownloadListener.onStart(mDownloadFile, mTotalLength);
                 for (BreakPointInfo breakPointInfo : list) {
-                    //直接分配任务
+                    //Direct assignment of tasks
                     DownloadThread downloadThread = new DownloadThread(taskInfo.getUrl(), file,
-                            breakPointInfo.id, list, downloadConfig, this);
+                            breakPointInfo.id, list, mDownloadConfig, this);
                     mDownloadThreadMap.put(breakPointInfo.id, downloadThread);
                     downloadThread.start();
                 }
@@ -277,10 +263,10 @@ class DownloadTask implements Runnable, DownloadThreadListener {
 
 
     /**
-     * 创建一个文件
+     * Create a file
      *
-     * @param parent 目录
-     * @param name   文件名
+     * @param parent directory
+     * @param name   fileName
      * @return File
      */
     private File createFile(String parent, String name) {
@@ -290,7 +276,7 @@ class DownloadTask implements Runnable, DownloadThreadListener {
                 return null;
             }
         }
-        //打开保存文件 或者 创建一个新的
+        //Open the save file or create a new one
         return new File(parent, name);
     }
 
@@ -312,7 +298,7 @@ class DownloadTask implements Runnable, DownloadThreadListener {
         long currentTime = System.currentTimeMillis() - mStartTime;
         double dt = (currentTime - mLastTime) / 1000.d;
         mLastTime = currentTime;
-        long speed = (long) (currentDownloaded / dt); //计算速度
+        long speed = (long) (currentDownloaded / dt); //Calculation speed
         mDBHelper.updateTaskInfoCurrent(id, totalDownloaded);
         mDownloadListener.onProgress(mDownloadFile, Util.humanReadableBytes(speed) + "/s", totalDownloaded, mTotalLength);
         if (totalDownloaded >= mTotalLength) {

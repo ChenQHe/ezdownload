@@ -1,44 +1,45 @@
-package com.xunfeivr.ezdownload.db;
+package com.chen.ezdownload.db;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-14 上午10:40
+ * Time:18-8-14 AM:10:40
  */
 public class BreakPointInfo {
     /**
-     * 断点 id 数据库中获取
+     * Breakpoint id in the database
      */
     public int id;
     /**
-     * 所属的任务 id
+     * Own task id
      */
     public int taskId;
     /**
-     * 断点起点
+     * Breakpoint starting point
      */
     public long start;
     /**
-     * 断点的游标的位置
+     * The position of the cursor of the breakpoint
      */
     public long offset;
     /**
-     * 断点长度 （结束点）
+     * Breakpoint length (end point)
      */
     public long length;
     /**
-     * 这个值不需要保存数据库中 它是用于计算下载速度的
+     * This value does not need to be saved in the database. It is used to calculate the download speed.
      */
     public long currentDownloaded;
 
     /**
-     * 下载的长度 为 游标位置 减去 起点
-     * @return 下载长度
+     * The length of the download is the cursor position minus the starting point
+     * @return Download length
      */
     public long downloadedSize() {
         return offset - start;
     }
+
     @Override
     public String toString() {
         return "BreakPointInfo{" +

@@ -1,47 +1,47 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
-import com.xunfeivr.ezdownload.db.BreakPointInfo;
+import com.chen.ezdownload.db.BreakPointInfo;
 
 import java.util.List;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-17 下午6:23
+ * Time:18-8-17 PM:6:23
  */
 interface DownloadThreadListener {
     /**
-     * 当文件开始下载时回调
+     * Callback when the file starts downloading
      *
-     * @param info 断点
+     * @param info Breakpoint
      */
     void onStart(BreakPointInfo info);
 
     /**
-     * 下载进度
+     * Download progress
      *
-     * @param info 断点
+     * @param info Breakpoint
      */
     void onProgress(List<BreakPointInfo> infoList, BreakPointInfo info);
 
     /**
-     * 下载出错时回调
+     * Callback when downloading errors
      *
-     * @param code 错误码
-     * @param msg  错误信息
+     * @param code Error code
+     * @param msg  Error message
      */
     void onError(BreakPointInfo info, int code, String msg);
 
     /**
-     * 文件下载成功
+     * File download succeeded
      *
-     * @param info 下载的文件
+     * @param info Downloaded file
      */
     void onCompleted(BreakPointInfo info);
 
     /**
-     * 下载取消
+     * Download cancellation
      *
      * @param info info
      */

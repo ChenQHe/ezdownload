@@ -1,4 +1,4 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
 import android.content.Context;
 
@@ -10,11 +10,11 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-17 下午6:54
+ * Time:18-8-17 PM:6:54
  * <p>
- * 管理  downloadTask
+ * manager downloadTask
  */
 class DownloadTaskDispatcher {
 
@@ -26,12 +26,22 @@ class DownloadTaskDispatcher {
 
     DownloadTaskDispatcher(Context context, DownloadListener downloadListener) {
         mContext = context;
-        mExecutors = new ThreadPoolExecutor(2, 5, 2, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
+        mExecutors = new ThreadPoolExecutor(3, 3, 3, TimeUnit.SECONDS, new LinkedBlockingDeque<Runnable>());
         mDownloadListener = downloadListener;
         mDownloadTaskMap = new ConcurrentHashMap<>();
     }
 
+    private DownloadConfig getDownloadConfig() {
+        if (mDownloadConfig == null) {
+            mDownloadConfig = new DownloadConfig();
+        }
+        return mDownloadConfig;
+    }
+
     void config(DownloadConfig downloadConfig) {
+        if (mDownloadConfig != null) {
+            mDownloadConfig = null;
+        }
         mDownloadConfig = downloadConfig;
     }
 
@@ -39,16 +49,14 @@ class DownloadTaskDispatcher {
         String url = downloadFile.getDownloadUrl();
         DownloadTask downloadTask = mDownloadTaskMap.get(url);
         if (downloadTask != null) {
-            if (downloadTask.isDownloading()){
+            if (downloadTask.isDownloading()) {
                 downloadTask.cancel();
             }
             mDownloadTaskMap.remove(url);
             mExecutors.remove(downloadTask);
         }
         downloadTask = new DownloadTask(mContext, downloadFile, mDownloadListener);
-        if (mDownloadConfig != null) {
-            downloadTask.config(mDownloadConfig);
-        }
+        downloadTask.config(getDownloadConfig());
         mDownloadTaskMap.put(url, downloadTask);
         mExecutors.execute(downloadTask);
     }
@@ -61,7 +69,7 @@ class DownloadTaskDispatcher {
         }
     }
 
-    public void shutDown() {
+    void shutDown() {
         if (!mExecutors.isShutdown()) {
             mExecutors.shutdown();
             mExecutors = null;

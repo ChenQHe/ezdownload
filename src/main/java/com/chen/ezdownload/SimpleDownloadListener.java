@@ -1,4 +1,4 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
 /**
  * Created by android studio.

@@ -1,4 +1,4 @@
-package com.xunfeivr.ezdownload.db;
+package com.chen.ezdownload.db;
 
 import android.content.ContentValues;
 import android.content.Context;
@@ -8,17 +8,17 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteException;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import com.xunfeivr.ezdownload.util.LogUtil;
-import com.xunfeivr.ezdownload.util.Util;
+import com.chen.ezdownload.util.LogUtil;
+import com.chen.ezdownload.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-21 上午10:04
+ * Time:18-8-21 AM:10:04
  */
 public class DBHelper extends SQLiteOpenHelper implements DBInterface {
 
@@ -85,9 +85,9 @@ public class DBHelper extends SQLiteOpenHelper implements DBInterface {
             contentValues.clear();
         }
         if (result == -1) {
-            LogUtil.e("插入失败！");
+            LogUtil.e("Insert failed！");
         } else {
-            LogUtil.e("插入断点成功！");
+            LogUtil.e("Insert breakpoint successfully！");
         }
         return result;
     }
@@ -108,9 +108,9 @@ public class DBHelper extends SQLiteOpenHelper implements DBInterface {
             result = updateBreakPointInfoCurrent(breakPointInfo.id, breakPointInfo.offset);
         }
         if (result == -1) {
-            LogUtil.e("插入失败！");
+            LogUtil.e("Insert failed！");
         } else {
-            LogUtil.e("插入任务断点成功！");
+            LogUtil.e("Insert task breakpoint successfully！");
         }
         return result;
     }
@@ -273,7 +273,7 @@ public class DBHelper extends SQLiteOpenHelper implements DBInterface {
         int result = getReadableDatabase().delete("task_info", "id=?", new String[]{String.valueOf(id)});
         getReadableDatabase().delete("break_point", "task_id=?", new String[]{String.valueOf(id)});
         if (result == -1) {
-            LogUtil.e("删除失败!");
+            LogUtil.e("failed to delete!");
         }
         return result;
     }
@@ -284,7 +284,7 @@ public class DBHelper extends SQLiteOpenHelper implements DBInterface {
         contentValues.put("current", current);
         int result = getReadableDatabase().update("task_info", contentValues, "id=?", new String[]{String.valueOf(id)});
         if (result == -1) {
-            LogUtil.e("更新失败!");
+            LogUtil.e("Update failed!");
         }
         contentValues.clear();
         return result;
@@ -296,7 +296,7 @@ public class DBHelper extends SQLiteOpenHelper implements DBInterface {
         contentValues.put("current", current);
         int result = getReadableDatabase().update("break_point", contentValues, "id=?", new String[]{String.valueOf(id)});
         if (result == -1) {
-            LogUtil.e("更新失败!");
+            LogUtil.e("Update failed!");
         }
         return result;
     }

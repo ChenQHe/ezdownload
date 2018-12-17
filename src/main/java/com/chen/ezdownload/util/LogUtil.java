@@ -1,12 +1,12 @@
-package com.xunfeivr.ezdownload.util;
+package com.chen.ezdownload.util;
 
 import android.util.Log;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-6-29 下午3:27
+ * Time:18-6-29 PM:3:27
  */
 public class LogUtil {
 

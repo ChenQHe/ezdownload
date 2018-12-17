@@ -1,31 +1,34 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
 import android.os.IBinder;
-
-import com.xunfeivr.ezdownload.util.LogUtil;
+import com.chen.ezdownload.util.LogUtil;
+import com.chen.ezdownload.util.Util;
 
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-13 下午5:57
+ * Time:18-8-13 PM:5:57
  * <p>
- * 下载服务
+ * Download service
  */
 public class DownloadService extends Service implements DownloadListener, IDownloadService {
 
     private DownloadTaskDispatcher mDownloadTaskDispatcher;
 
+    private NotifyWrapper mNotifyWrapper;
     /**
-     * 下载监听器的集合  这样作可以保证在其他地方刷新进度
+     * Download the collection of listeners. This will ensure that the progress is refreshed elsewhere.
      */
     private final List<DownloadListener> mDownloadListenerList = new ArrayList<>();
+
+    private INotification mNotification;
 
     @Override
     public IBinder onBind(Intent intent) {
@@ -39,7 +42,24 @@ public class DownloadService extends Service implements DownloadListener, IDownl
     }
 
     public void config(DownloadConfig config) {
+        if (config == null) {
+            return;
+        }
         mDownloadTaskDispatcher.config(config);
+    }
+
+    public void setNotification(INotification notification) {
+        if (mNotification != null) {
+            mNotification = null;
+        }
+        mNotification = notification;
+    }
+
+    private INotification getNotification() {
+        if (mNotification == null) {
+            mNotification = new SimpleNotification();
+        }
+        return mNotification;
     }
 
     @Override
@@ -57,6 +77,9 @@ public class DownloadService extends Service implements DownloadListener, IDownl
     private void init() {
         if (mDownloadTaskDispatcher == null) {
             mDownloadTaskDispatcher = new DownloadTaskDispatcher(this, this);
+        }
+        if (mNotifyWrapper == null) {
+            mNotifyWrapper = new NotifyWrapper(this);
         }
     }
 
@@ -83,6 +106,8 @@ public class DownloadService extends Service implements DownloadListener, IDownl
 
     @Override
     public void onStart(DownloadFile file, long length) {
+        mNotifyWrapper.createNotify(file.getDownloadUrl(), getNotification(), file.getFileName(),
+                "Download preparation..." + Util.humanReadableBytes(length));
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
                 downloadListener.onStart(file, length);
@@ -92,6 +117,10 @@ public class DownloadService extends Service implements DownloadListener, IDownl
 
     @Override
     public void onProgress(DownloadFile file, String speed, long current, long total) {
+        int progress = (int) (1.0f * current / total);
+        mNotifyWrapper.showProgress(file.getDownloadUrl(), progress,
+                "Downloading:" + Util.humanReadableBytes(current) + "/" + Util.humanReadableBytes(total)
+                        + "---" + speed);
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
                 downloadListener.onProgress(file, speed, current, total);
@@ -101,6 +130,7 @@ public class DownloadService extends Service implements DownloadListener, IDownl
 
     @Override
     public void onError(DownloadFile file, int code, String msg) {
+        mNotifyWrapper.updateMessage(file.getDownloadUrl(), "Download error：" + msg);
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
                 downloadListener.onError(file, code, msg);
@@ -110,6 +140,7 @@ public class DownloadService extends Service implements DownloadListener, IDownl
 
     @Override
     public void onCompleted(DownloadFile file) {
+        mNotifyWrapper.updateMessage(file.getDownloadUrl(), "Download completed");
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
                 downloadListener.onCompleted(file);
@@ -119,6 +150,7 @@ public class DownloadService extends Service implements DownloadListener, IDownl
 
     @Override
     public void onCancel(DownloadFile file) {
+        mNotifyWrapper.updateMessage(file.getDownloadUrl(), "Download pause");
         for (DownloadListener downloadListener : mDownloadListenerList) {
             if (downloadListener != null) {
                 downloadListener.onCancel(file);
@@ -126,9 +158,26 @@ public class DownloadService extends Service implements DownloadListener, IDownl
         }
     }
 
+    private void shutdown() {
+        LogUtil.e("Service has been killed！");
+        mDownloadTaskDispatcher.shutDown();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        shutdown();
+    }
+
+    @Override
+    public void onTaskRemoved(Intent rootIntent) {
+        super.onTaskRemoved(rootIntent);
+        shutdown();
+    }
+
     @Override
     public boolean onUnbind(Intent intent) {
-        LogUtil.e("移除所有监听者");
+        LogUtil.e("Remove all listeners");
         mDownloadListenerList.clear();
         return super.onUnbind(intent);
     }

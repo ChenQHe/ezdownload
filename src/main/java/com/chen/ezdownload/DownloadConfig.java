@@ -1,15 +1,15 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-14 上午10:50
+ * Time:18-8-14 AM:10:50
  * <p>
- * 下载配置文件
+ * Download configuration file
  */
 public class DownloadConfig {
 
@@ -18,24 +18,24 @@ public class DownloadConfig {
     public final static String DELETE = "DELETE";
     public final static String PUT = "PUT";
     /**
-     * 请求方式  默认get
+     * Request method default get
      */
     private String mMethod = GET;
     /**
-     * 连接超时  默认 15s
+     * Connection timeout default 15s
      */
     private int mTimeOut = 15 * 1000;
     /**
-     * 读取超时 默认 15s
+     * Read timeout default 15s
      */
     private int mReadOut = 15 * 1000;
     /**
-     * 刷新率 默认每 80次写入 刷新一次进度
+     * Refresh rate defaults every 80 writes to refresh the progress
      */
     private int rate = 100;
 
     /**
-     * 线程个数
+     * Number of threads
      */
     private int threadNum = 2;
 
@@ -49,7 +49,7 @@ public class DownloadConfig {
     }
 
     /**
-     * 请求参数
+     * Request parameter
      */
     private final Map<String, String> mRequestParams = new HashMap<>();
 
@@ -100,5 +100,4 @@ public class DownloadConfig {
         mRequestParams.put(key, value);
         return this;
     }
-
 }

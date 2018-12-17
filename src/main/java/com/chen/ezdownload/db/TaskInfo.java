@@ -1,40 +1,40 @@
-package com.xunfeivr.ezdownload.db;
+package com.chen.ezdownload.db;
 
 import java.util.List;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-21 上午9:59
+ * Time:18-8-21 AM:9:59
  */
 public class TaskInfo {
     /**
-     * 任务id  数据库中获取
+     * Task id  Obtained from the database
      */
     private int id;
     /**
-     * 下载url
+     * Download url
      */
     private String url;
     /**
-     * 下载文件名
+     * Download file name
      */
     private String fileName;
     /**
-     * 下载保存的目录
+     * Download saved directory
      */
     private String parent;
     /**
-     * 下载文件总长度
+     * Total length of download file
      */
     private long length;
     /**
-     * 当前下载的长度
+     * Current download length
      */
     private long current;
     /**
-     * 这个任务的所有断点信息
+     * All breakpoint information for this task
      */
     private List<BreakPointInfo> breakPointInfoList;
 

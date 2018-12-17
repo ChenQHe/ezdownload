@@ -1,15 +1,15 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
 import android.os.Handler;
 import android.os.Message;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-17 上午11:36
+ * Time:18-8-17 AM11:36
  * <p>
- * 将子线程回调到UI线程  使用的是静态代理模式
+ * Calling the child thread back to the UI thread using the static proxy mode
  */
 class DownloadMessageHandler implements DownloadListener, Handler.Callback {
 

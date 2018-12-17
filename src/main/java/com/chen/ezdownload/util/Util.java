@@ -1,6 +1,6 @@
-package com.xunfeivr.ezdownload.util;
+package com.chen.ezdownload.util;
 
-import com.xunfeivr.ezdownload.DownloadConfig;
+import com.chen.ezdownload.DownloadConfig;
 
 import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
@@ -42,7 +42,7 @@ public class Util {
         int unit = 1024;
         if (bytes < unit) return bytes + " B";
         int exp = (int) (Math.log(bytes) / Math.log(unit));
-        String pre = ("KMGTPE").charAt(exp - 1) + ("i");
+        char pre = ("KMGTPE").charAt(exp - 1);
         return String.format(Locale.ENGLISH, "%.1f %sB", bytes / Math.pow(unit, exp), pre);
     }
 

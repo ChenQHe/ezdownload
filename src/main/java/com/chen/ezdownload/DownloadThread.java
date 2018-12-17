@@ -1,8 +1,8 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
-import com.xunfeivr.ezdownload.db.BreakPointInfo;
-import com.xunfeivr.ezdownload.util.LogUtil;
-import com.xunfeivr.ezdownload.util.Util;
+import com.chen.ezdownload.db.BreakPointInfo;
+import com.chen.ezdownload.util.LogUtil;
+import com.chen.ezdownload.util.Util;
 
 import java.io.BufferedInputStream;
 import java.io.ByteArrayOutputStream;
@@ -16,56 +16,58 @@ import java.util.List;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-8-15 下午4:41
+ * Time:18-8-15 PM:4:41
  * <p>
- * 一个断点的下载线程
+ * a breakpoint download thread
  */
 class DownloadThread extends Thread {
 
     private static final int DOWNLOAD_STATE_ING = 1;
     private static final int DOWNLOAD_STATE_INIT = 2;
     /**
-     * 下载配置文件
+     * Download configuration file
      */
     private DownloadConfig mDownloadConfig;
     /**
-     * 所有的下载线程的断点信息 回调进度用
+     * Breakpoint information for all download threads
      */
     private List<BreakPointInfo> mBreakPointInfoList;
     /**
-     * 该线程的断点信息
+     * Breakpoint information for this thread
      */
     private BreakPointInfo mBreakPointInfo;
     /**
-     * 线程下载回调
+     * Thread download callback
      */
     private DownloadThreadListener mDownloadListener;
     /**
-     * 控制停止
+     * Control stop
      */
     private boolean stop;
     /**
-     * 下载的url
+     * Downloaded url
      */
     private String mUrl;
     /**
-     * 下载保存的文件
+     * Download saved file
      */
     private File mFile;
-
+    /**
+     * Download state
+     */
     private int mDownloadState;
 
     /**
-     * 构造方法
+     * Construction method
      *
-     * @param url              下载地址
-     * @param file             下载位置
-     * @param id               断点id
-     * @param list             所有线程的集合
-     * @param downloadConfig   下载配置
-     * @param downloadListener 下载回调
+     * @param url              download link
+     * @param file             Download location
+     * @param id               Breakpoint id
+     * @param list             Collection of all threads
+     * @param downloadConfig   Download configuration
+     * @param downloadListener Download callback
      */
     DownloadThread(String url, File file, int id, List<BreakPointInfo> list,
                    DownloadConfig downloadConfig, DownloadThreadListener downloadListener) {
@@ -83,13 +85,13 @@ class DownloadThread extends Thread {
     }
 
     /**
-     * 取消下载
+     * Cancel download
      */
     void cancel() {
         stop = true;
     }
 
-    boolean isRunning() {
+    public boolean isRunning() {
         return mDownloadState != DOWNLOAD_STATE_INIT;
     }
 
@@ -99,34 +101,34 @@ class DownloadThread extends Thread {
         BufferedInputStream bis = null;
         HttpURLConnection connection = null;
         try {
-            //如果已经下载完 直接回调完成
+            //If the download has been completed, the direct callback is completed.
             if (mBreakPointInfo.offset >= mBreakPointInfo.length) {
                 mDownloadListener.onCompleted(mBreakPointInfo);
                 return;
             }
-            //创建任意访问文件
+            //Create any access file
             accessFile = new RandomAccessFile(mFile, "rwd");
-            //将位置移到游标处
+            //Move the position to the cursor
             accessFile.seek(mBreakPointInfo.offset);
-            //给服务器的请求头  里面表示需要请求哪段数据 ("Range","bytes=offset-length")
+            //The request header to the server indicates which piece of data needs to be requested ("Range", "bytes=offset-length")
             String range = "bytes=" + mBreakPointInfo.offset + "-" + mBreakPointInfo.length;
             LogUtil.e(range);
-            //创建连接
+            //Create a connection
             URL url = new URL(mUrl);
             connection = (HttpURLConnection) url.openConnection();
-            //配置
+            //Configuration
             Util.configConnection(connection, mDownloadConfig);
-            //添加断点请求
+            //Add a breakpoint request
             connection.addRequestProperty(Util.RANGE, range);
-            //获取回调频率
+            //Get callback frequency
             int rate = mDownloadConfig.getRate();
-            //连接net
+            //Connect to network
             connection.connect();
-            //记录下载状态 正在下载
+            //Record download status Downloading
             mDownloadState = DOWNLOAD_STATE_ING;
             int code = connection.getResponseCode();
             if (code == HttpURLConnection.HTTP_OK || code == HttpURLConnection.HTTP_PARTIAL) {
-                //如果服务器有错误 直接返回
+                //If the server has an error, return directly
                 InputStream errorStream = connection.getErrorStream();
                 if (errorStream != null) {
                     ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
@@ -141,20 +143,20 @@ class DownloadThread extends Thread {
                     byteArrayOutputStream.close();
                     return;
                 }
-                //获取输入流
+                //Get the input stream
                 InputStream is = connection.getInputStream();
                 bis = new BufferedInputStream(is);
                 mDownloadListener.onStart(mBreakPointInfo);
                 int len;
                 byte[] buf = new byte[512];
-                int count = 0;//记录写入次数
+                int count = 0;//Record writes
                 while ((len = bis.read(buf)) != -1) {
                     accessFile.write(buf, 0, len);//
-                    mBreakPointInfo.offset = mBreakPointInfo.offset + len;//移动游标
-                    mBreakPointInfo.currentDownloaded = mBreakPointInfo.currentDownloaded + len;//记录当前下载长度
+                    mBreakPointInfo.offset = mBreakPointInfo.offset + len;//Moving cursor
+                    mBreakPointInfo.currentDownloaded = mBreakPointInfo.currentDownloaded + len;//Record the current download length
                     count = count + 1;
                     if (count % rate == 0 || mBreakPointInfo.offset >= mBreakPointInfo.length) {
-                        //回调进度
+                        //Callback progress
                         mDownloadListener.onProgress(mBreakPointInfoList, mBreakPointInfo);
                         mBreakPointInfo.currentDownloaded = 0;
                         if (mBreakPointInfo.offset >= mBreakPointInfo.length) {
@@ -162,12 +164,12 @@ class DownloadThread extends Thread {
                         }
                     }
 
-                    if (stop) {//用户取消
+                    if (stop) {//User canceled
                         mDownloadListener.onCancel(mBreakPointInfo);
                         break;
                     }
                 }
-                if (!stop) {//如果没有取消
+                if (!stop) {//If not canceled
                     mDownloadListener.onCompleted(mBreakPointInfo);
                 }
             } else {
@@ -176,7 +178,7 @@ class DownloadThread extends Thread {
         } catch (IOException e) {
             mDownloadListener.onError(mBreakPointInfo, HttpError.SERVER_ERROR, e.toString());
         } finally {
-            //不管如何 最终都要下载完成 资源释放和文件保存
+            //No matter how you end up downloading the resource release and file saving
             mDownloadState = DOWNLOAD_STATE_INIT;
             if (accessFile != null) {
                 try {

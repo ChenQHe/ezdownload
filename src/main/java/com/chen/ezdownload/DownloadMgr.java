@@ -1,4 +1,4 @@
-package com.xunfeivr.ezdownload;
+package com.chen.ezdownload;
 
 import android.app.Activity;
 import android.content.ComponentName;
@@ -7,41 +7,42 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.os.IBinder;
 
-import com.xunfeivr.ezdownload.util.LogUtil;
+import com.chen.ezdownload.util.LogUtil;
 
 /**
  * Created by android studio.
- * company:讯飞幻境科技有限公司
+ * company:Xunfei Magic Technology Co., Ltd.
  * author:ChenHe
- * Time:18-7-3 上午11:17
+ * Time:18-7-3 AM:11:17
  * <p>
- * 管理整个下载服务  使用的是静态代理模式
+ * Manage the entire download service using static proxy mode
  */
 public class DownloadMgr implements IDownloadService {
-
     /**
-     * 后台下载服务
+     * Background download service
      */
     private DownloadService mDownloadService;
 
     private ServiceConnection mServiceConnection;
     /**
-     * 监听器
+     * Listener for link service completion or not
      */
-    private DownloadListener mDownloadListener;
+    private IBindListener mIBindListener;
 
     private DownloadMgr() {
         mServiceConnection = new ServiceConnection() {
             @Override
             public void onServiceConnected(ComponentName name, IBinder service) {
-                LogUtil.e("服务启动成功!");
+                LogUtil.e("Service started successfully!");
                 mDownloadService = ((DownloadService.MyBinder) service).getService();
-                addDownloadListener(mDownloadListener);
+                if (mIBindListener != null) {
+                    mIBindListener.onConnectedServer();
+                }
             }
 
             @Override
             public void onServiceDisconnected(ComponentName name) {
-                LogUtil.e("服务启动失败!");
+                LogUtil.e("Service startup failed!");
             }
         };
     }
@@ -55,36 +56,41 @@ public class DownloadMgr implements IDownloadService {
     }
 
     /**
-     * 这个应该在 MainActivity 的onCreate()中调用
+     * This should be called in the onCreate() of MainActivity
      *
-     * @param context          上下文
-     * @param downloadListener 监听器
+     * @param context       context
+     * @param iBindListener listener
      */
-    public void bindService(Activity context, DownloadListener downloadListener) {
+    public void bindService(Activity context, IBindListener iBindListener) {
         if (context == null) {
             return;
         }
-        mDownloadListener = downloadListener;
+        mIBindListener = iBindListener;
         Intent intent = new Intent(context, DownloadService.class);
         context.startService(intent);
         context.bindService(intent, mServiceConnection, Context.BIND_WAIVE_PRIORITY);
     }
 
     /**
-     * 这个应该在 MainActivity 的onDestroy()中调用
+     * This should be called in the OnDestroy() of MainActivity
      *
-     * @param context 上下文
+     * @param context context
      */
     public void unbindService(Activity context) {
         if (context != null) {
             context.unbindService(mServiceConnection);
-            removeDownloadListener(mDownloadListener);
         }
     }
 
     public void config(DownloadConfig config) {
         if (mDownloadService != null) {
             mDownloadService.config(config);
+        }
+    }
+
+    public void setNotification(INotification notification) {
+        if (mDownloadService != null) {
+            mDownloadService.setNotification(notification);
         }
     }
 
@@ -105,7 +111,7 @@ public class DownloadMgr implements IDownloadService {
     @Override
     public void addDownloadListener(DownloadListener downloadListener) {
         if (mDownloadService != null && downloadListener != null) {
-            LogUtil.e("添加一个监听器");
+            LogUtil.e("Add a listener");
             mDownloadService.addDownloadListener(downloadListener);
         }
     }
@@ -113,7 +119,7 @@ public class DownloadMgr implements IDownloadService {
     @Override
     public void removeDownloadListener(DownloadListener downloadListener) {
         if (mDownloadService != null && downloadListener != null) {
-            LogUtil.e("移除一个监听器");
+            LogUtil.e("Remove a listener");
             mDownloadService.removeDownloadListener(downloadListener);
         }
     }
