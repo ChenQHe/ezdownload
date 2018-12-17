@@ -12,25 +12,25 @@ class DownloadMessage {
     /**
      * File length
      */
-    public long length;
+    long length;
     /**
      * Current download length
      */
-    public long current;
+    long current;
     /**
      * Downloaded file
      */
-    public DownloadFile file;
+    DownloadFile file;
     /**
      * download speed
      */
-    public String speed;
+    String speed;
     /**
      * error code
      */
-    public int code;
+    int code;
     /**
      * Error message
      */
-    public String error;
+    String error;
 }

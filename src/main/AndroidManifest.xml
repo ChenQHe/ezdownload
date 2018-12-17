@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.xunfeivr.ezdownload" >
+    package="com.chen.ezdownload" >
     <uses-permission android:name="android.permission.INTERNET"/>
     <application>
         <service android:name=".DownloadService" />
