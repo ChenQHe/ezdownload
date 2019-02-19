@@ -33,9 +33,21 @@ class NotifyWrapper {
         mManager = NotificationManagerCompat.from(context);
         mBuilderMap = new ConcurrentHashMap<>();
         mSequenceGenerator = new AtomicInteger();
+        destroy = false;
+    }
+
+    private boolean destroy;
+
+    void destroy() {
+        destroy = true;
+        mManager = null;
+        mSequenceGenerator = null;
+        mBuilderMap.clear();
+        mBuilderMap = null;
     }
 
     void createNotify(String url, INotification iBuilder, String fileName, String message) {
+        if (destroy) return;
         if (mBuilderMap.get(url) != null) {
             return;
         }
@@ -50,6 +62,7 @@ class NotifyWrapper {
     }
 
     void showProgress(String url, int progress, String message) {
+        if (destroy) return;
         NotifyBuilderWrapper notifyWrapper = mBuilderMap.get(url);
         if (notifyWrapper == null) {
             return;
@@ -60,6 +73,7 @@ class NotifyWrapper {
     }
 
     void updateMessage(String url, String message) {
+        if (destroy) return;
         NotifyBuilderWrapper notifyWrapper = mBuilderMap.get(url);
         if (notifyWrapper == null) {
             return;

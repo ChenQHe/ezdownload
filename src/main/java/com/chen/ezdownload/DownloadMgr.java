@@ -93,7 +93,11 @@ public class DownloadMgr implements IDownloadService {
             mDownloadService.setNotification(notification);
         }
     }
-
+    public void noNeedNotification() {
+        if (mDownloadService != null) {
+            mDownloadService.noNeedNotification();
+        }
+    }
     @Override
     public void download(DownloadFile file) {
         if (mDownloadService != null && file != null) {

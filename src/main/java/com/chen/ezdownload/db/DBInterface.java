@@ -53,7 +53,7 @@ public interface DBInterface {
 
     /**
      * Update the progress of a task in the database
-     * @param id 任务 id
+     * @param id Task id
      * @param current Current progress
      * @return Database saved task id
      */

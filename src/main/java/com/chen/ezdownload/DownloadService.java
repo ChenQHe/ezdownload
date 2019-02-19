@@ -47,6 +47,9 @@ public class DownloadService extends Service implements DownloadListener, IDownl
         }
         mDownloadTaskDispatcher.config(config);
     }
+    public void noNeedNotification() {
+        mNotifyWrapper.destroy();
+    }
 
     public void setNotification(INotification notification) {
         if (mNotification != null) {
@@ -158,21 +161,12 @@ public class DownloadService extends Service implements DownloadListener, IDownl
         }
     }
 
-    private void shutdown() {
-        LogUtil.e("Service has been killed！");
-        mDownloadTaskDispatcher.shutDown();
-    }
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        shutdown();
-    }
 
     @Override
     public void onTaskRemoved(Intent rootIntent) {
         super.onTaskRemoved(rootIntent);
-        shutdown();
+        LogUtil.e("Service has been killed！");
+        mDownloadTaskDispatcher.shutDown();
     }
 
     @Override
